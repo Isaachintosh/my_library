@@ -40,11 +40,11 @@ Terminal command:
 
         my_library
     
-- If the module has been found, click at the install button, also you can check the installation of the module is running.
+- If the module has been found, click at the install button, also you can check if the installation of the module is running.
 
-- as soon as it finishes the installation, Odoo will refresh the page to access the module's UI.
+- As soon as it finishes the installation, Odoo will refresh the page to access the module's UI.
 
-- Finallu, try to register a book, considering that you must activate the session's super-user mode.
+- Finally, try to register a book, considering that you must activate the session's super-user mode.
 
 # If you encounter any problem at the module execution, what you can do?
 
