@@ -50,12 +50,12 @@ class LibraryBook(models.Model):
         )
     category_id = fields.Many2one('library.book.category')
 
-# def name_get(self):
-#     result = []
-#     for record in self:
-#         rec_name = "%s (%s)" % (record.name, record.date_release)
-#         result.append((record.id, rec_name))
-#         return result
+def name_get(self):
+    result = []
+    for record in self:
+        rec_name = "%s (%s)" % (record.name, record.date_release)
+        result.append((record.id, rec_name))
+        return result
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'

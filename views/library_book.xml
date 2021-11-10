@@ -26,6 +26,7 @@
                         <field name="notes"/>
                         <field name="cost_price"/>
                         <field name="currency_id"/>
+                        <field name="category_id" />
                         <!-- <field name="retail_price"/> -->
                     </group>
                     <group>
