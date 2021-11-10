@@ -6,14 +6,18 @@
 
 First of all, you need these technologies to run this module:
 
-- Python 3.5 or above installed in your Virtual Environment
+- Python 3 or above installed in your Virtual Environment
+
 - An Odoo Instance pre-configured with an Virtual Environment activated
+
 - Obs.: For this module I used a Virtual Environment named "odoo-12.0"
+
 - A file .cfg into the odoo-dev/odoo with the name of the instance
 
 # How to run
 
 - First of all, clone this repository at the local-addons folder inside the odoo-dev folder
+
 - After that you will initiate the venv of the instance, for example:
 
 Terminal command: 
