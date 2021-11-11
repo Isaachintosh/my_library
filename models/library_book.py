@@ -3,10 +3,19 @@ from odoo.addons import decimal_precision as dp
 from odoo.exceptions import ValidationError
 from datetime import timedelta
 
+class BaseArchive(models.AbstractModel):
+    _name = 'base.archive'
+    active = fields.Boolean(default=True)
+
+    def do_archive(self):
+        for record in self:
+            record.active = not record.active
+
 class LibraryBook(models.Model):
     _name = 'library.book'
     _description = 'Library Book'
 
+    _inherit = ['base.archive']
     _order = 'date_release desc, name'
     
     name = fields.Char('Title', required=True, index=True)
@@ -128,6 +137,7 @@ class LibraryBook(models.Model):
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
+    _order = 'name'
     
     published_book_ids = fields.One2many(
         'library.book',
@@ -140,3 +150,21 @@ class ResPartner(models.Model):
         string='Authored Books',
         # relation='library_book_res_partner_rel'
     )
+    count_books = fields.Integer(
+        'Number of Authored Books',
+        compute='_compute_count_books'
+        )
+    
+    @api.depends('authored_books_ids')
+    def _compute_cout_books(self):
+        for r in self:
+            r.count_books = len (r.authored_books_ids)
+
+class LibraryMember(models.Model):
+    _name = 'library.member'
+    _inherits = {'res.partner': 'partner_id'}
+    partner_id = fields.Many2one('res.partner', ondelete='cascade')
+    date_start = fields.Date('Member Since')
+    date_end = fields.Date('Termination Date')
+    member_number = fields.Char()
+    date_of_birth = fields.Date('Date of birth')
