@@ -26,6 +26,7 @@ class LibraryBook(models.Model):
     cover = fields.Binary('Book Cover')
     out_of_print = fields.Boolean('Out of Print?')
     date_release = fields.Date('Release Date')
+    date_updated = fields.Datetime('Last Updated', copy=False)
     pages = fields.Integer(
         'Number of Pages',
         groups='base.group_user',
@@ -42,6 +43,7 @@ class LibraryBook(models.Model):
         digits=dp.get_precision('Book Price')
         )
     currency_id = fields.Many2one('res.currency', string='Currency')
+    retail_price = fields.Monetary('Retail Price')
     publisher_id = fields.Many2one(
         'res.partner', 
         string='Publisher',
@@ -49,6 +51,11 @@ class LibraryBook(models.Model):
         context={},
         domain=[],
         )
+    publisher_city = fields.Char(
+        'Publisher City',
+        related='publisher_id.city',
+        readonly=True
+    )
     category_id = fields.Many2one('library.book.category')
     age_days = fields.Float(
         string='Days Since Release',
@@ -58,13 +65,17 @@ class LibraryBook(models.Model):
         store=False,
         compute_sudo=False,
         )
+    ref_doc_id = fields.Reference(
+        selection='_referenciable_models',
+        string='Reference Document'
+    )
 
-    def name_get(self):
-        result = []
-        for record in self:
-            rec_name = "%s (%s)" % (record.name, record.date_release)
-            result.append((record.id, rec_name))
-            return result
+    @api.model
+    def _referenciable_models(self):
+        models = self.env['ir.model'].search([
+            ('field_id.name', '=', 'message_ids')
+        ])
+        return [(x.model, x.name) for x in models]
 
     @api.depends('date_release')
     def _compute_age(self):
@@ -89,6 +100,15 @@ class LibraryBook(models.Model):
             '<': '>',
             '<=': '>=',
         }
+        new_op = operator_map.get(operator, operator)
+        return [('date_release', new_op, value_date)]
+
+    def name_get(self):
+        result = []
+        for record in self:
+            rec_name = "%s (%s)" % (record.name, record.date_release)
+            result.append((record.id, rec_name))
+            return result
 
     _sql_constraints = [
         ('name_uniq', 'UNIQUE (name)', 'Book title must be unique.'),
