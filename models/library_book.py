@@ -1,6 +1,7 @@
 from odoo import fields, models, api
 from odoo.addons import decimal_precision as dp
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
+from odoo.tools.translate import _
 from datetime import timedelta
 
 class BaseArchive(models.AbstractModel):
@@ -23,14 +24,14 @@ class LibraryBook(models.Model):
     rec_name = 'short_name'
     notes = fields.Text('Internal Notes')
     author_ids = fields.Many2many('res.partner', string='Authors')
-    state = fields.Selection(
-        [
-            ('draft', 'Not Avaliable'),
+    
+    state = fields.Selection([
+            ('draft', 'Unavaliable'),
             ('avaliable', 'Avaliable'),
-            ('lost', 'Lost')
-        ],
-        'State', default="draft"
-    )
+            ('borrowed', 'Borrowed'),
+            ('lost', 'Lost')],
+            'State', default="draft")
+
     description = fields.Html('Description', sanitize=True, strip_style=False)
     cover = fields.Binary('Book Cover')
     out_of_print = fields.Boolean('Out of Print?')
@@ -85,6 +86,42 @@ class LibraryBook(models.Model):
             ('field_id.name', '=', 'message_ids')
         ])
         return [(x.model, x.name) for x in models]
+    
+    @api.model
+    def is_allowed_transition(self, old_state, new_state):
+        allowed = [
+            ('draft', 'avaliable'),
+            ('avaliable', 'borrowed'),
+            ('borrowed', 'avaliable'),
+            ('avaliable',   'lost'),
+            ('lost', 'avaliable')]
+        return (old_state, new_state) in allowed
+
+    @api.model
+    def make_avaliable(self):
+        self.change_state('avaliable')
+
+    @api.model
+    def make_borrowed(self):
+        self.change_state('borrowed')
+
+    @api.model
+    def make_lost(self):
+        self.change_state('lost')
+    
+    @api.model
+    def get_all_library_members(self):
+        library_member_model = self.env['library.member']
+        return library_member_model.search([])
+
+    @api.multi
+    def change_state(self, new_state):
+        for book in self:
+            if book.is_allowed_transition(book.state, new_state):
+                book.state = new_state
+            else:
+                msg = _('Moving from %s to %s is not allowed') % (book.state, new_state)
+                raise UserError(msg)
 
     @api.depends('date_release')
     def _compute_age(self):
@@ -121,7 +158,7 @@ class LibraryBook(models.Model):
 
     _sql_constraints = [
         ('name_uniq', 'UNIQUE (name)', 'Book title must be unique.'),
-        # ('positive_page', 'CHECK(pages>0)', 'No of pages must be positive')
+        ('positive_page', 'CHECK(pages>0)', 'No of pages must be positive')
     ]
 
     @api.constrains('date_release')
@@ -130,10 +167,6 @@ class LibraryBook(models.Model):
             if record.date_release and record.date_release > fields.Date.today():
                 raise models.ValidationError('Release date must be in the past.')
     
-    # def _check_num_pages(self):
-    #     for record in self:
-    #         if record.pages and record.pages <= 0:
-    #             raise models,ValidationError('Number of pages must be positive.')
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
