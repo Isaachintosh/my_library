@@ -3,6 +3,9 @@ from odoo.addons import decimal_precision as dp
 from odoo.exceptions import ValidationError, UserError
 from odoo.tools.translate import _
 from datetime import timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 class BaseArchive(models.AbstractModel):
     _name = 'base.archive'
@@ -108,11 +111,45 @@ class LibraryBook(models.Model):
     @api.model
     def make_lost(self):
         self.change_state('lost')
+
+    def create_categories(self):
+        categ1 = {
+            'name': 'Child Category 1',
+            'description': 'Description for Child 1'
+        }
+        categ2 = {
+            'name': 'Child Category 1',
+            'description': 'Description for Child 2'
+        }
+        parent_category_val = {
+            'name': 'Parent Category',
+            'description': 'Description for Parent Category',
+            'child_ids': [
+                (0, 0, categ1),
+                (0, 0, categ2),
+            ]
+        }
+        record = self.env['library.book.category'].create(parent_category_val)
+        #to create multiple records in a batch, use the following line:
+        # record = self.env['library.book.category'].create([categ1, categ2])
     
     @api.model
     def get_all_library_members(self):
         library_member_model = self.env['library.member']
         return library_member_model.search([])
+
+    def find_books(self):
+        allbooks = self.search([])
+        filtered_books = self.books_with_multiple_authors(allbooks)
+        logger.info('Filtered Books: %s', filtered_books)
+
+    @api.model
+    def books_with_multiple_authors(self, all_books):
+        def predicate(book):
+            if len(book.author_ids):
+                return True
+            return False
+        return all_books.filter(predicate)
 
     @api.multi
     def change_state(self, new_state):
@@ -122,6 +159,13 @@ class LibraryBook(models.Model):
             else:
                 msg = _('Moving from %s to %s is not allowed') % (book.state, new_state)
                 raise UserError(msg)
+    
+    @api.multi
+    def change_update_date(self):
+        self.ensure_one()
+        self.update({
+            'date_updated': fields.Datetime.now()
+        })
 
     @api.depends('date_release')
     def _compute_age(self):
@@ -155,6 +199,19 @@ class LibraryBook(models.Model):
             rec_name = "%s (%s)" % (record.name, record.date_release)
             result.append((record.id, rec_name))
             return result
+
+    @api.multi
+    def find_book(self):
+        domain = [
+            '|',
+                '&',    ('name', 'ilike', 'Book Name'),
+                        ('category_id.name', 'ilike', 'Category Name'),
+                '&',    ('name', 'ilike', 'Book Name 2'),
+                        ('category_id.name', 'ilike', 'Category Name 2')
+        ]
+        books = self.search(domain)
+        logger.info('Books found: %s', books)
+        return True
 
     _sql_constraints = [
         ('name_uniq', 'UNIQUE (name)', 'Book title must be unique.'),
@@ -196,7 +253,7 @@ class ResPartner(models.Model):
 class LibraryMember(models.Model):
     _name = 'library.member'
     _inherits = {'res.partner': 'partner_id'}
-    partner_id = fields.Many2one('res.partner', ondelete='cascade')
+    partner_id = fields.Many2one('res.partner', required=True,ondelete='cascade')
     date_start = fields.Date('Member Since')
     date_end = fields.Date('Termination Date')
     member_number = fields.Char()
