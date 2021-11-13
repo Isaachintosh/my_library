@@ -30,6 +30,12 @@ Terminal command:
 
     odoo/odoo-bin --addons-path=odoo/addons,local-addons/
 
+Also if you want to see the server executing the debug checks during live, you could add "--log-level=debug" to the command.
+
+Terminal command with live debug activated
+
+    odoo/odoo-bin --addons-path=odoo/addons,local-addons/ --log-level=debug
+
 # How to check if the module has been load succesfully:
 
 - Check if the server log of the terminal had run the instance and initiated the services with http statuses 200, if not, the terminal will show the error.
