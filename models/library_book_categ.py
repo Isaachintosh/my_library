@@ -20,6 +20,12 @@ class BookCategory(models.Model):
         string='Child Categories')
     parent_path = fields.Char(index=True)
 
+    max_borrow_days = fields.Integer(
+        'Maximum borrow days',
+        help="For how many days book can be borrowed",
+        default=10
+    )
+
     @api.constrains('parent_id')
     def _check_hierarchy(self):
         if not self._check_recursion():

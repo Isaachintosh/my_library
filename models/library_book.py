@@ -23,6 +23,7 @@ class LibraryBook(models.Model):
     _order = 'date_release desc, name'
     
     name = fields.Char('Title', required=True, index=True)
+    isbn = fields.Char('ISBN')
     short_name = fields.Char('Short Title', translate=True, index=True)
     rec_name = 'short_name'
     notes = fields.Text('Internal Notes')
@@ -82,6 +83,9 @@ class LibraryBook(models.Model):
         selection='_referenciable_models',
         string='Reference Document'
     )
+    date_return = fields.Date('Date to return')
+    manager_remarks = fields.Text('Manager Remarks')
+    old_edition = fields.Many2one('library.book', string='Old Edition')
 
     @api.model
     def _referenciable_models(self):
@@ -138,6 +142,14 @@ class LibraryBook(models.Model):
         library_member_model = self.env['library.member']
         return library_member_model.search([])
 
+    @api.model
+    def get_author_names(self, books):
+        return books.mapped('author_ids.name')
+
+    @api.model
+    def sort_books_by_date(self, books):
+        return books.sorted(key='release_date', reverse=True)
+
     def find_books(self):
         allbooks = self.search([])
         filtered_books = self.books_with_multiple_authors(allbooks)
@@ -150,6 +162,41 @@ class LibraryBook(models.Model):
                 return True
             return False
         return all_books.filter(predicate)
+
+    @api.model
+    def create(self, values):
+        if not self.user_has_groups('my_library.acl_book_librarian'):
+            if 'manager_remarks' in values:
+                raise UserError(
+                    'You are not allowed to modify '
+                    'manager_remarks'
+                )
+        return super(LibraryBook, self).create(values)
+    
+    @api.model
+    def _name_search(self, name='', args=None, operator='ilike', limit=100, name_get_uid=None):
+        args = [] if args is None else args.copy()
+        if not(name == '' and operator == 'ilike'):
+            args += ['|', '|',
+                ('name', operator, name),
+                ('isbn', operator, name),
+                ('author_ids.name', operator, name)
+            ]
+            books_ids = self.search(args).ids
+            return self.browse(books_ids).name_get()
+        return super(LibraryBook, self)._name_search(
+            name=name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
+
+    
+    @api.multi
+    def write(self, values):
+        if not self.user_has_groups('my_library.acl_book_librarian'):
+            if 'manager_remarks' in values:
+                raise UserError(
+                    'You are not allowed to modify '
+                    'manager_remarks'
+                )
+        return super(LibraryBook, self).write(values)
 
     @api.multi
     def change_state(self, new_state):
@@ -193,12 +240,20 @@ class LibraryBook(models.Model):
         new_op = operator_map.get(operator, operator)
         return [('date_release', new_op, value_date)]
 
+    @api.multi
     def name_get(self):
         result = []
+        
         for record in self:
             rec_name = "%s (%s)" % (record.name, record.date_release)
             result.append((record.id, rec_name))
-            return result
+        
+        for book in self:
+            authors = book.author_ids.mapped('name')
+            name = '%s (%s)' % (book.name, ', '.join(authors))
+            result.append((book.id, name))
+        
+        return result
 
     @api.multi
     def find_book(self):
