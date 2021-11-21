@@ -29,6 +29,7 @@
                         <field name="name"/>
                         <field name="isbn" />
                         <field name="author_ids" widget="many2many_tags"/>
+                        <!-- <field name="old_edition" /> -->
                         <field name="state"/>
                         <field name="pages"/>
                         <field name="notes"/>

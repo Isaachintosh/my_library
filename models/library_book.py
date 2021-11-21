@@ -85,7 +85,7 @@ class LibraryBook(models.Model):
     )
     date_return = fields.Date('Date to return')
     manager_remarks = fields.Text('Manager Remarks')
-    old_edition = fields.Many2one('library.book', string='Old Edition')
+    # old_edition = fields.Many2one('library.book', string='Old Edition')
 
     @api.model
     def _referenciable_models(self):
@@ -187,7 +187,25 @@ class LibraryBook(models.Model):
         return super(LibraryBook, self)._name_search(
             name=name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
 
-    
+    def grouped_data(self):
+        data = self._get_average_cost()
+        _logger.info("Grouped Data %s" % data)
+
+    @api.model
+    def _get_average_cost(self):
+        grouped_result = self.read_group(
+            [('cost_price', '!=', False)],
+            ['category_id', 'cost_price:avg'],
+            ['category_id']
+        )
+        return grouped_result
+
+    @api.model
+    def _update_book_price(self):
+        all_books = self.search([])
+        for book in all_books:
+            book.cost_price += 10
+
     @api.multi
     def write(self, values):
         if not self.user_has_groups('my_library.acl_book_librarian'):

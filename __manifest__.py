@@ -13,7 +13,7 @@
     'website': "http://www.yourcompany.com",
 
     'category': 'Uncategorized',
-    'version': '12.0.1',
+    'version': '12.0.1.0.1',
 
     'depends': [
         'base',
@@ -25,9 +25,11 @@
         'security/ir.model.access.csv',
         'views/library_book.xml',
         'views/library_book_categ.xml',
+        'data/data.xml',
+        'data/demo.xml'
     ],
     'demo': [
-        'demo/demo.xml',
+        'data/demo.xml',
     ],
     'application': True,
 }
