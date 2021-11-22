@@ -201,10 +201,10 @@ class LibraryBook(models.Model):
         return grouped_result
 
     @api.model
-    def _update_book_price(self):
-        all_books = self.search([])
-        for book in all_books:
-            book.cost_price += 10
+    def _update_book_price(self, category, amount_to_increase):
+        category_books = self.search([('category_id', '=', category.id)])
+        for book in category_books:
+            book.cost_price += amount_to_increase
 
     @api.multi
     def write(self, values):

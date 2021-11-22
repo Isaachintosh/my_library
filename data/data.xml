@@ -21,5 +21,9 @@
 
     <delete model="library.book.category" search="[('name', 'ilike', 'Test Category')]"/>
     <!-- <delete model="library.book.category" id="book_category_to_delete"/> -->
-    <function model="library.book" name="update_book_price"/>
+    <function 
+        model="library.book" 
+        name="update_book_price"
+        eval="(ref('category_xml_id'), 20)"
+    />
 </odoo>

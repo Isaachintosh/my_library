@@ -36,6 +36,20 @@ Terminal command with live debug activated
 
     odoo/odoo-bin --addons-path=odoo/addons,local-addons/ --log-level=debug
 
+# Using watchdog lib to live-restart the odoo instance server
+
+Once you have making some progress to update features in methods, models and so on, restarting the instance serve could be a repetitive work, with this auto-reload lib you could gain more time to the develeopment process.
+
+## How to install it?
+
+1. Make sure that you have activated your python development environment before install the package
+
+2. After that, type this command in your terminal:
+
+        odoo/odoo-bin -c ~/odoo-dev/odoo/odoo-12.0.cfg --dev=all
+
+For more information, access the documentation of this lib in odoo docs.
+
 # How to check if the module has been load succesfully:
 
 - Check if the server log of the terminal had run the instance and initiated the services with http statuses 200, if not, the terminal will show the error.
