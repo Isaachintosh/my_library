@@ -87,6 +87,16 @@ class LibraryBook(models.Model):
     manager_remarks = fields.Text('Manager Remarks')
     # old_edition = fields.Many2one('library.book', string='Old Edition')
 
+    def book_rent(self):
+        self.ensure_one()
+        if self.state != 'avaliable':
+            raise UserError(_('Book is not avaliable for renting'))
+        rent_as_superuser = self.env['library.book.rent'].sudo()
+        rent_as_superuser.create({
+            'book_id': self.id,
+            'borrower_id': self.env.user.partner_id.id,
+        })
+
     @api.model
     def _referenciable_models(self):
         models = self.env['ir.model'].search([

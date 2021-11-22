@@ -18,11 +18,13 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button name="book_rent" string="Rent this book" type="object" class="btn-primary"/>
                     <button name="make_avaliable" string="Make Avaliable" type="object"/>
                     <button name="make_borrowed" string="Make Borrowed" type="object"/>
                     <button name="make_lost" string="Make Lost" type="object"/>
                     <button name="create_categories" string="Create Categories" type="object"/>
                     <button name="change_update_date" string="Update Date" type="object"/>
+                    <field name="state" widget="statusbar"/>
                 </header>
                 <group>
                     <group>
@@ -44,6 +46,7 @@
                         <field name="publisher_city"/>
                         <field name="date_release"/>
                         <field name="date_updated"/>
+                        <field name="active" />
                         <field name="cover" widget="image" class="oe_avatar"/>
                         <field name="reader_rating"/>
                     </group>
