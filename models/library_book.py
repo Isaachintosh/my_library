@@ -7,14 +7,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class BaseArchive(models.AbstractModel):
-    _name = 'base.archive'
-    active = fields.Boolean(default=True)
-
-    def do_archive(self):
-        for record in self:
-            record.active = not record.active
-
 class LibraryBook(models.Model):
     _name = 'library.book'
     _description = 'Library Book'
@@ -97,6 +89,22 @@ class LibraryBook(models.Model):
             'borrower_id': self.env.user.partner_id.id,
         })
 
+    def average_book_occupation(self):
+        sql_query = """
+            SELECT
+                lb.name,
+                avg((EXTRACT(epoch from age(return_date, rent_date)) / 86400))::int
+            FROM
+                library_book_rent AS lbr
+            JOIN
+                library_book as lb ON lb.id = lbr.book_id
+            WHERE lbr.state = 'returned'
+            GROUP BY lb.name;
+        """
+        self.env.cr.execute(sql_query)
+        result = self.env.cr.fetchall()
+        logger.info("Average book occuparion: %s", result)
+
     @api.model
     def _referenciable_models(self):
         models = self.env['ir.model'].search([
@@ -124,7 +132,10 @@ class LibraryBook(models.Model):
 
     @api.model
     def make_lost(self):
-        self.change_state('lost')
+        self.ensure_one()
+        self.state = 'lost'
+        if not self.env.context.get('avoid_deactivate'):
+            self.active = False
 
     def create_categories(self):
         categ1 = {
@@ -306,38 +317,3 @@ class LibraryBook(models.Model):
         for record in self:
             if record.date_release and record.date_release > fields.Date.today():
                 raise models.ValidationError('Release date must be in the past.')
-    
-
-class ResPartner(models.Model):
-    _inherit = 'res.partner'
-    _order = 'name'
-    
-    published_book_ids = fields.One2many(
-        'library.book',
-        'publisher_id',
-        string='Published Books'
-    )
-
-    authored_book_ids = fields.Many2many(
-        'library.book',
-        string='Authored Books',
-        # relation='library_book_res_partner_rel'
-    )
-    count_books = fields.Integer(
-        'Number of Authored Books',
-        compute='_compute_count_books'
-        )
-    
-    @api.depends('authored_books_ids')
-    def _compute_cout_books(self):
-        for r in self:
-            r.count_books = len (r.authored_books_ids)
-
-class LibraryMember(models.Model):
-    _name = 'library.member'
-    _inherits = {'res.partner': 'partner_id'}
-    partner_id = fields.Many2one('res.partner', required=True,ondelete='cascade')
-    date_start = fields.Date('Member Since')
-    date_end = fields.Date('Termination Date')
-    member_number = fields.Char()
-    date_of_birth = fields.Date('Date of birth')
