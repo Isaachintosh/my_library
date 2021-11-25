@@ -14,12 +14,4 @@ class LibraryRentWizard(models.TransientModel):
             rentModel.create({
                 'borrower_id': self.borrower_id.id,
                 'book_id': book.id
-            })
-        members = self.mapped('borrower_id')
-        action = members.get_formview_action()
-        if len(borrowers.ids) > 1:
-            action['domain'] = [('id', 'in', tuple(members.ids))]
-            action['view_mode'] = 'tree,form'
-        return action
-
-    
+            })   

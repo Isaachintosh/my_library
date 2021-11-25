@@ -252,6 +252,23 @@ class LibraryBook(models.Model):
         self.update({
             'date_updated': fields.Datetime.now()
         })
+    
+    @api.multi
+    def return_all_books(self):
+        self.ensure_one()
+        wizard = self.env['library.return.wizard']
+        values = {
+            'borrower_id': self.env.user.partner_id.id,
+        }
+        specs = wizard._onchange_spec()
+        updates = wizard.onchange(values, ['borrower_id'], specs)
+        value = updates.get('value', {})
+        for name, val in value.items():
+            if isinstance(val, tuple):
+                value[name] = val[0]
+        values.update(value)
+        wiz = wizard.create(values)
+        return wiz.sudo().books_returns()
 
     @api.depends('date_release')
     def _compute_age(self):
