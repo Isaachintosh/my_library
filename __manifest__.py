@@ -28,9 +28,11 @@
         'views/library_book_rent.xml',
         'views/library_book_rent_wizard.xml',
         'views/library_return_wizard_form.xml',
+        'views/res_config_settings_views.xml',
         'data/data.xml',
         'data/demo.xml'
     ],
+    'post_iniit_hook': 'add_book_hook',
     'demo': [
         'data/demo.xml',
     ],
